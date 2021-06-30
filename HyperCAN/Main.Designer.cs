@@ -37,13 +37,15 @@
             this.saveCaptureToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripDropDownButton2 = new System.Windows.Forms.ToolStripDropDownButton();
             this.appearanceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.fontSizeToolStripMenuItem = new System.Windows.Forms.ToolStripComboBox();
             this.cOMPortToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripComboBoxCOM = new System.Windows.Forms.ToolStripComboBox();
             this.startButton = new System.Windows.Forms.Button();
             this.pauseButton = new System.Windows.Forms.Button();
             this.clearButton = new System.Windows.Forms.Button();
             this.richCANBox = new System.Windows.Forms.RichTextBox();
-            this.fontSizeToolStripMenuItem = new System.Windows.Forms.ToolStripComboBox();
-            this.toolStripComboBoxCOM = new System.Windows.Forms.ToolStripComboBox();
+            this.textBox1 = new System.Windows.Forms.TextBox();
+            this.captureSearch = new System.Windows.Forms.Button();
             this.toolStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -73,13 +75,13 @@
             // openLogToolStripMenuItem
             // 
             this.openLogToolStripMenuItem.Name = "openLogToolStripMenuItem";
-            this.openLogToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.openLogToolStripMenuItem.Size = new System.Drawing.Size(148, 22);
             this.openLogToolStripMenuItem.Text = "Open Capture";
             // 
             // saveCaptureToolStripMenuItem
             // 
             this.saveCaptureToolStripMenuItem.Name = "saveCaptureToolStripMenuItem";
-            this.saveCaptureToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.saveCaptureToolStripMenuItem.Size = new System.Drawing.Size(148, 22);
             this.saveCaptureToolStripMenuItem.Text = "Save Capture";
             this.saveCaptureToolStripMenuItem.Click += new System.EventHandler(this.saveCaptureToolStripMenuItem_Click);
             // 
@@ -100,22 +102,45 @@
             this.appearanceToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.fontSizeToolStripMenuItem});
             this.appearanceToolStripMenuItem.Name = "appearanceToolStripMenuItem";
-            this.appearanceToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.appearanceToolStripMenuItem.Size = new System.Drawing.Size(137, 22);
             this.appearanceToolStripMenuItem.Text = "Appearance";
+            // 
+            // fontSizeToolStripMenuItem
+            // 
+            this.fontSizeToolStripMenuItem.Items.AddRange(new object[] {
+            "10",
+            "11",
+            "12",
+            "13",
+            "14",
+            "15",
+            "16",
+            "17",
+            "18"});
+            this.fontSizeToolStripMenuItem.Name = "fontSizeToolStripMenuItem";
+            this.fontSizeToolStripMenuItem.Size = new System.Drawing.Size(180, 23);
+            this.fontSizeToolStripMenuItem.Text = "Font Size";
+            this.fontSizeToolStripMenuItem.Click += new System.EventHandler(this.fontSizeToolStripMenuItem_Click);
             // 
             // cOMPortToolStripMenuItem
             // 
             this.cOMPortToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripComboBoxCOM});
             this.cOMPortToolStripMenuItem.Name = "cOMPortToolStripMenuItem";
-            this.cOMPortToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.cOMPortToolStripMenuItem.Size = new System.Drawing.Size(137, 22);
             this.cOMPortToolStripMenuItem.Text = "COM Port";
             this.cOMPortToolStripMenuItem.Click += new System.EventHandler(this.cOMPortToolStripMenuItem_Click);
+            // 
+            // toolStripComboBoxCOM
+            // 
+            this.toolStripComboBoxCOM.Name = "toolStripComboBoxCOM";
+            this.toolStripComboBoxCOM.Size = new System.Drawing.Size(180, 23);
+            this.toolStripComboBoxCOM.Click += new System.EventHandler(this.toolStripComboBoxCOM_Click);
             // 
             // startButton
             // 
             this.startButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.startButton.Location = new System.Drawing.Point(4, 100);
+            this.startButton.Location = new System.Drawing.Point(4, 75);
             this.startButton.Name = "startButton";
             this.startButton.Size = new System.Drawing.Size(120, 40);
             this.startButton.TabIndex = 4;
@@ -126,7 +151,7 @@
             // pauseButton
             // 
             this.pauseButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.pauseButton.Location = new System.Drawing.Point(4, 146);
+            this.pauseButton.Location = new System.Drawing.Point(4, 122);
             this.pauseButton.Name = "pauseButton";
             this.pauseButton.Size = new System.Drawing.Size(120, 40);
             this.pauseButton.TabIndex = 5;
@@ -137,7 +162,7 @@
             // clearButton
             // 
             this.clearButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.clearButton.Location = new System.Drawing.Point(4, 192);
+            this.clearButton.Location = new System.Drawing.Point(4, 168);
             this.clearButton.Name = "clearButton";
             this.clearButton.Size = new System.Drawing.Size(120, 40);
             this.clearButton.TabIndex = 6;
@@ -159,28 +184,24 @@
             this.richCANBox.Text = "";
             this.richCANBox.TextChanged += new System.EventHandler(this.richCANBox_TextChanged);
             // 
-            // fontSizeToolStripMenuItem
+            // textBox1
             // 
-            this.fontSizeToolStripMenuItem.Items.AddRange(new object[] {
-            "10",
-            "11",
-            "12",
-            "13",
-            "14",
-            "15",
-            "16",
-            "17",
-            "18"});
-            this.fontSizeToolStripMenuItem.Name = "fontSizeToolStripMenuItem";
-            this.fontSizeToolStripMenuItem.Size = new System.Drawing.Size(180, 23);
-            this.fontSizeToolStripMenuItem.Text = "Font Size";
-            this.fontSizeToolStripMenuItem.Click += new System.EventHandler(this.fontSizeToolStripMenuItem_Click);
+            this.textBox1.Location = new System.Drawing.Point(4, 214);
+            this.textBox1.Name = "textBox1";
+            this.textBox1.Size = new System.Drawing.Size(120, 20);
+            this.textBox1.TabIndex = 8;
+            this.textBox1.TextChanged += new System.EventHandler(this.textBox1_TextChanged);
+            this.textBox1.KeyDown += new System.Windows.Forms.KeyEventHandler(this.textBox1_KeyDown);
             // 
-            // toolStripComboBoxCOM
+            // captureSearch
             // 
-            this.toolStripComboBoxCOM.Name = "toolStripComboBoxCOM";
-            this.toolStripComboBoxCOM.Size = new System.Drawing.Size(180, 23);
-            this.toolStripComboBoxCOM.Click += new System.EventHandler(this.toolStripComboBoxCOM_Click);
+            this.captureSearch.Location = new System.Drawing.Point(26, 240);
+            this.captureSearch.Name = "captureSearch";
+            this.captureSearch.Size = new System.Drawing.Size(75, 23);
+            this.captureSearch.TabIndex = 9;
+            this.captureSearch.Text = "Search";
+            this.captureSearch.UseVisualStyleBackColor = true;
+            this.captureSearch.Click += new System.EventHandler(this.captureSearch_Click);
             // 
             // main
             // 
@@ -188,6 +209,8 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.ControlDarkDark;
             this.ClientSize = new System.Drawing.Size(1008, 729);
+            this.Controls.Add(this.captureSearch);
+            this.Controls.Add(this.textBox1);
             this.Controls.Add(this.richCANBox);
             this.Controls.Add(this.clearButton);
             this.Controls.Add(this.pauseButton);
@@ -219,6 +242,8 @@
         private System.Windows.Forms.RichTextBox richCANBox;
         private System.Windows.Forms.ToolStripComboBox fontSizeToolStripMenuItem;
         private System.Windows.Forms.ToolStripComboBox toolStripComboBoxCOM;
+        private System.Windows.Forms.TextBox textBox1;
+        private System.Windows.Forms.Button captureSearch;
     }
 }
 

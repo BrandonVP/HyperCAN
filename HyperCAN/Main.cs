@@ -21,7 +21,8 @@ namespace HyperCAN
         int SerialBaudRate = 500000;
         String PortCOM = "COM10";
         internal SaveFileDialog SaveFileDialog1;
-        public event EventHandler SelectionChangeCommitted;
+        SerialClient serial1;
+        bool stopMessage = false;
 
         public main()
         {
@@ -34,10 +35,12 @@ namespace HyperCAN
         {
             try
             {
-                serialPort1.BaudRate = SerialBaudRate;
-                serialPort1.PortName = PortCOM;
-                serialPort1.Open();
-                serialPort1.DataReceived += serialPort1_DataReceived;
+                serial1 = new SerialClient(PortCOM, SerialBaudRate);
+                serial1.OnReceiving += new EventHandler<DataStreamEventArgs>(receiveHandler);
+                if (!serial1.OpenConn())
+                {
+                    MessageBox.Show(this, "The Port Cannot Be Opened", "Serial Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
             catch(Exception f)
             {
@@ -45,34 +48,28 @@ namespace HyperCAN
             }
         }
 
-        private void serialPort1_DataReceived(object sender, System.IO.Ports.SerialDataReceivedEventArgs e)
+        private void receiveHandler(object sender, DataStreamEventArgs e)
         {
-            try
+          
+            string line = System.Text.Encoding.Default.GetString(e.Response);
+            richCANBox.Invoke(new MethodInvoker(delegate { richCANBox.AppendText(line); }));
+
+            // Clear messages in buffer after clear button pressed. 
+            // TODO: Try waiting for thread to finish before clearing using join
+            if (stopMessage)
             {
-                string line = serialPort1.ReadLine();
-                richCANBox.Invoke(new MethodInvoker(delegate { richCANBox.AppendText(line + "\n"); }));
+                richCANBox.Invoke(new MethodInvoker(delegate { richCANBox.Clear(); }));
             }
-            catch(Exception f)
-            {
-
-            }
-        }
-        
-        private void mainBody_SelectedIndexChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void CANBox_TextChanged(object sender, EventArgs e)
-        {
-
         }
 
         private void startButton_Click(object sender, EventArgs e)
         {
             try
             {
-                serialPort1.WriteLine("0");
+                stopMessage = false;
+                byte[] data = new byte[1];
+                data[0] = 48;
+                serial1.Transmit(data);
             }
             catch(Exception f)
             {
@@ -84,7 +81,9 @@ namespace HyperCAN
         {
             try
             {
-                serialPort1.WriteLine("1");
+                byte[] data = new byte[1];
+                data[0] = 49;
+                serial1.Transmit(data);
             }
             catch (Exception f)
             {
@@ -94,15 +93,18 @@ namespace HyperCAN
 
         private void clearButton_Click(object sender, EventArgs e)
         {
+            stopMessage = true;
             try
             {
-                serialPort1.WriteLine("2");
-                richCANBox.Clear();
+                byte[] data = new byte[1];
+                data[0] = 50;
+                serial1.Transmit(data);
             }
             catch (Exception f)
             {
 
             }
+            richCANBox.Clear();
         }
 
         private void main_Load(object sender, EventArgs e)
@@ -209,6 +211,44 @@ namespace HyperCAN
             PortCOM = toolStripComboBoxCOM.SelectedItem.ToString();
             serialPort1.Close();
             startSerial();
+        }
+
+        private void textBox1_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+
+
+        public static void Find(RichTextBox rtb, String word, Color color)
+        {
+            if (word == "")
+            {
+                return;
+            }
+            int s_start = rtb.SelectionStart, startIndex = 0, index;
+            while ((index = rtb.Text.IndexOf(word, startIndex)) != -1)
+            {
+                rtb.Select(index, word.Length);
+                rtb.SelectionColor = color;
+                startIndex = index + word.Length;
+            }
+            rtb.SelectionStart = 0;
+            rtb.SelectionLength = rtb.TextLength;
+            //rtb.SelectionColor = Color.Black;
+        }
+
+        private void captureSearch_Click(object sender, EventArgs e)
+        {
+            Find(richCANBox, textBox1.Text, Color.Blue);
+        }
+
+        private void textBox1_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                captureSearch_Click(sender, e);
+            }
         }
     }
 }
