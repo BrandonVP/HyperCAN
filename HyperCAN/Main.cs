@@ -218,8 +218,6 @@ namespace HyperCAN
 
         }
 
-
-
         public static void Find(RichTextBox rtb, String word, Color color)
         {
             if (word == "")
@@ -249,6 +247,16 @@ namespace HyperCAN
             {
                 captureSearch_Click(sender, e);
             }
+        }
+
+        private void helpToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            System.Diagnostics.Process.Start("https://github.com/BrandonVP/HyperCAN");
+        }
+
+        private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show("Version 1.1", "Release");
         }
     }
 }
