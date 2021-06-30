@@ -240,7 +240,7 @@
             this.Controls.Add(this.toolStrip1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "main";
-            this.Text = "HyperCAN 1.0";
+            this.Text = "HyperCAN";
             this.Load += new System.EventHandler(this.main_Load);
             this.toolStrip1.ResumeLayout(false);
             this.toolStrip1.PerformLayout();
