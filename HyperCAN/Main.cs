@@ -12,8 +12,6 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-
-
 namespace HyperCAN
 {
     public partial class main : Form
@@ -52,7 +50,7 @@ namespace HyperCAN
         {
             string line = System.Text.Encoding.Default.GetString(e.Response);
 
-            Console.WriteLine("1) The length of '{0}' is {1}", line, line.Length);
+            //Console.WriteLine("1) The length of '{0}' is {1}", line, line.Length);
 
             // line.Split attempts to split the string before it is completely written
             //string[] stringValues = line.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
@@ -60,7 +58,7 @@ namespace HyperCAN
 
             //Console.WriteLine("1) The messge count '{0}' is {1}", line, a);
             
-            if(line.Length > 63)
+            if(line.Length > 63 && !String.IsNullOrEmpty(line))
             {
                 richCANBox.Invoke(new MethodInvoker(delegate { richCANBox.AppendText(line); }));
             }
