@@ -184,7 +184,8 @@ namespace HyperCAN
                 byte[] buf = new byte[count];
                 int readBytes = Receive(buf, 0, count);
 
-                if (readBytes > 0)
+                // Leaving some bytes in buffer to avoid writing before all the data has arived
+                if (readBytes > 30)
                 {
                     OnSerialReceiving(buf);
                 }

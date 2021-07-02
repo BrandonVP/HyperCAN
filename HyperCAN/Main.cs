@@ -50,9 +50,20 @@ namespace HyperCAN
 
         private void receiveHandler(object sender, DataStreamEventArgs e)
         {
-          
             string line = System.Text.Encoding.Default.GetString(e.Response);
-            richCANBox.Invoke(new MethodInvoker(delegate { richCANBox.AppendText(line); }));
+
+            Console.WriteLine("1) The length of '{0}' is {1}", line, line.Length);
+
+            // line.Split attempts to split the string before it is completely written
+            //string[] stringValues = line.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            //int a = Int32.Parse(stringValues[0]);
+
+            //Console.WriteLine("1) The messge count '{0}' is {1}", line, a);
+            
+            if(line.Length > 63)
+            {
+                richCANBox.Invoke(new MethodInvoker(delegate { richCANBox.AppendText(line); }));
+            }
 
             // Clear messages in buffer after clear button pressed. 
             // TODO: Try waiting for thread to finish before clearing using join
