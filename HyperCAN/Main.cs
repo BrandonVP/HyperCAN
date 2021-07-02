@@ -50,7 +50,7 @@ namespace HyperCAN
 
         private void receiveHandler(object sender, DataStreamEventArgs e)
         {
-
+            // working it
             string line = System.Text.Encoding.Default.GetString(e.Response);
             //string line = System.Text.Encoding.Default.GetString(e.Response);
             //Console.WriteLine("1) The length of '{0}' is {1}", line, line.Length);
