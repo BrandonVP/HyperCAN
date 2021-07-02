@@ -201,10 +201,10 @@ namespace HyperCAN
                         Thread.Sleep(tmpInterval.Milliseconds > freqCriticalLimit ? freqCriticalLimit : tmpInterval.Milliseconds);
 
                     /*Testing Threading Model*/
-                    Diagnostics.Debug.Write(tmpInterval.Milliseconds.ToString());
-                    Diagnostics.Debug.Write(" - ");
-                    Diagnostics.Debug.Write(readBytes.ToString());
-                    Diagnostics.Debug.Write("\r\n");
+                    //Diagnostics.Debug.Write(tmpInterval.Milliseconds.ToString());
+                    //Diagnostics.Debug.Write(" - ");
+                    //Diagnostics.Debug.Write(readBytes.ToString());
+                    //Diagnostics.Debug.Write("\r\n");
                 }
                 #endregion
             }

@@ -46,28 +46,31 @@ namespace HyperCAN
             }
         }
 
+        StreamWriter streamwriter = new StreamWriter(@"C:\Users\bvanpelt\Documents\log.txt", true, Encoding.UTF8, 65536);
+
         private void receiveHandler(object sender, DataStreamEventArgs e)
         {
+
             string line = System.Text.Encoding.Default.GetString(e.Response);
-
+            //string line = System.Text.Encoding.Default.GetString(e.Response);
             //Console.WriteLine("1) The length of '{0}' is {1}", line, line.Length);
-
+            //Console.WriteLine("1) Split: '{0}'", (line.Split('\n').Length > 1));
+            //streamwriter.WriteLine(line);
             // line.Split attempts to split the string before it is completely written
             //string[] stringValues = line.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
             //int a = Int32.Parse(stringValues[0]);
 
             //Console.WriteLine("1) The messge count '{0}' is {1}", line, a);
-            
-            if(line.Length > 63 && !String.IsNullOrEmpty(line))
+            if (line.Length > 63 && !String.IsNullOrEmpty(line) && !String.IsNullOrWhiteSpace(line))
             {
-                richCANBox.Invoke(new MethodInvoker(delegate { richCANBox.AppendText(line); }));
+                richCANBox.BeginInvoke(new MethodInvoker(delegate { richCANBox.AppendText(line); }));
             }
 
             // Clear messages in buffer after clear button pressed. 
             // TODO: Try waiting for thread to finish before clearing using join
             if (stopMessage)
             {
-                richCANBox.Invoke(new MethodInvoker(delegate { richCANBox.Clear(); }));
+                richCANBox.BeginInvoke(new MethodInvoker(delegate { richCANBox.Clear(); }));
             }
         }
 
