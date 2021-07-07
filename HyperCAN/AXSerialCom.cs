@@ -45,7 +45,7 @@ namespace HyperCAN
         private double _PacketsRate;
         private DateTime _lastReceive;
         /*The Critical Frequency of Communication to Avoid Any Lag*/
-        private const int freqCriticalLimit = 20;
+        private const int freqCriticalLimit = 100;
         #endregion
 
         #region Constructors
@@ -173,6 +173,7 @@ namespace HyperCAN
         #region Threading Loops
         private void SerialReceiving()
         {
+            int readBytes = 0;
             while (true)
             {
                 int count = _serialPort.BytesToRead;
@@ -182,10 +183,14 @@ namespace HyperCAN
 
                 /*Form The Packet in The Buffer*/
                 byte[] buf = new byte[count];
-                int readBytes = Receive(buf, 0, count);
+                if (count > 63)
+                {
+                    readBytes = Receive(buf, 0, count);
+                }
+                
 
                 // Leaving some bytes in buffer to avoid writing before all the data has arived
-                if (readBytes > 30)
+                if (readBytes > 0)
                 {
                     OnSerialReceiving(buf);
                 }
@@ -195,18 +200,21 @@ namespace HyperCAN
 
                 _lastReceive = DateTime.Now;
 
+                
                 if ((double)(readBytes + _serialPort.BytesToRead) / 2 <= _PacketsRate)
                 {
                     if (tmpInterval.Milliseconds > 0)
                         Thread.Sleep(tmpInterval.Milliseconds > freqCriticalLimit ? freqCriticalLimit : tmpInterval.Milliseconds);
 
-                    /*Testing Threading Model*/
+                    //Testing Threading Model
                     //Diagnostics.Debug.Write(tmpInterval.Milliseconds.ToString());
                     //Diagnostics.Debug.Write(" - ");
                     //Diagnostics.Debug.Write(readBytes.ToString());
                     //Diagnostics.Debug.Write("\r\n");
                 }
+                
                 #endregion
+                
             }
 
         }

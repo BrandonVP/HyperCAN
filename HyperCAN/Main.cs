@@ -61,10 +61,11 @@ namespace HyperCAN
             //int a = Int32.Parse(stringValues[0]);
 
             //Console.WriteLine("1) The messge count '{0}' is {1}", line, a);
-            if (line.Length > 63 && !String.IsNullOrEmpty(line) && !String.IsNullOrWhiteSpace(line))
-            {
+            //if (line.Length > 63)
+            //if (line.Length > 63 && !String.IsNullOrEmpty(line) && !String.IsNullOrWhiteSpace(line))
+            //{
                 richCANBox.BeginInvoke(new MethodInvoker(delegate { richCANBox.AppendText(line); }));
-            }
+            //}
 
             // Clear messages in buffer after clear button pressed. 
             // TODO: Try waiting for thread to finish before clearing using join
