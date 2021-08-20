@@ -115,12 +115,9 @@ namespace HyperCAN
         {
             if (dataReady || serialPort.getbufferSize() > 1)
             {
-                //UpdateDataWindow(receivedData);
-                int temp = serialPort.popBuffer();
-                if(temp != -1)
-                {
-                    UpdateDataWindow(serialPort.RXBuffer[serialPort.getbufferOutPtr()]);
-                }
+                
+                UpdateDataWindow(serialPort.getFRAME());
+                
                 dataReady = false;
             }
         }

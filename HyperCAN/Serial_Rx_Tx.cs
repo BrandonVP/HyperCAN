@@ -8,42 +8,120 @@
 // is not lines of text terminated by /n.  This would be because ReadLine() cannot find a line terminator in the wrong type of data.
 // This code is intended for use with lines of text only.  It is not intended for use with any other type of data.
 //
+
+// Modified from: https://github.com/dalegambill/CsharpTerminal
+// 8/20/2021, Brandon Van Pelt
+// Added circular buffer
+
 using System;
 using System.IO.Ports;
 using System.Diagnostics;
 
 namespace SERIAL_RX_TX
 {
-    public class SerialComPort
+    public class Stack
     {
-        const int MAX_BUFFER_SIZE = 2048;
-        public int bufferOutPtr = 0;
-        public int bufferInPtr = 0;
-        public int bufferSize = 0;
-        public String[] RXBuffer = new string[MAX_BUFFER_SIZE];
+        private int array_size;
+        private int bufferOutPtr;
+        private int bufferInPtr;
+        private int MessagesInBuffer;
+        private String[] CAN_Bus_Stack;
 
-        public int getbufferOutPtr()
+        public Stack(int size)
         {
-            return bufferOutPtr;
-        }  
-        public int getbufferSize()
-        {
-            return bufferSize;
+            array_size = size;
+            CAN_Bus_Stack = new string[array_size];
+            bufferOutPtr = 0;
+            bufferInPtr = 0;
+            MessagesInBuffer = 0;
         }
 
-        public void Stop()
+        public bool push(String addMe)
+        {
+            CAN_Bus_Stack[bufferInPtr] = addMe;
+
+            bufferInPtr++;
+            // End of circular buffer 
+            if (bufferInPtr == array_size)
+            {
+                bufferInPtr = 0;
+            }
+            // Overflow case
+            if (bufferInPtr == bufferOutPtr)
+            {
+                bufferOutPtr++;
+                // Let user know an overwrite occured
+                return false;
+            }
+            else
+            {
+                MessagesInBuffer++;
+            }
+            return true;
+        }
+
+        public String pop()
+        {
+            int temp = bufferOutPtr;
+
+            // Check if empty
+            if (bufferOutPtr != bufferInPtr)
+            {
+                bufferOutPtr++;
+
+                // End of circular buffer 
+                if (bufferOutPtr > array_size - 1)
+                {
+                    bufferOutPtr = 0;
+                }
+                MessagesInBuffer--;
+                return CAN_Bus_Stack[temp];
+            }
+            // empty
+            return null;
+        }
+
+        public int stack_size()
+        {
+            return MessagesInBuffer;
+        }
+
+        public String peek()
+        {
+            return CAN_Bus_Stack[bufferOutPtr];
+        }
+
+        public void reset()
         {
             bufferOutPtr = 0;
             bufferInPtr = 0;
-            bufferSize = 0;
+            MessagesInBuffer = 0;
         }
+    }
 
-        private SerialPort comPort;
+    public class SerialComPort
+    {
+        Stack myStack;
+        SerialPort comPort;
+
+        public int getbufferSize()
+        {
+            return myStack.stack_size();
+        }
+        public String getFRAME()
+        {
+            return myStack.pop();
+        }
+        public void Stop()
+        {
+            myStack.reset();
+        }
 
         // constructor
         public SerialComPort()
         {
             comPort = new SerialPort();
+            myStack = new Stack(2048);
         }
 
         ~SerialComPort()
@@ -148,47 +226,6 @@ namespace SERIAL_RX_TX
             return comPort.IsOpen;
         }
 
-        public int pushBuffer()
-        {
-            int temp = bufferInPtr;
-            bufferInPtr++;
-            // End of circular buffer 
-            if(bufferInPtr == MAX_BUFFER_SIZE)
-            {
-                bufferInPtr = 0;
-            }
-            // Overflow case
-            if(bufferInPtr == bufferOutPtr)
-            {
-                bufferOutPtr++;
-            }
-            else
-            {
-                bufferSize++;
-            }
-            return temp;
-        }
-
-        public int popBuffer()
-        {
-            // Check if empty
-            if (bufferOutPtr != bufferInPtr)
-            {
-                int temp = bufferOutPtr;
-                bufferOutPtr++;
-
-                // End of circular buffer 
-                if (bufferOutPtr > MAX_BUFFER_SIZE - 1)
-                {
-                    bufferOutPtr = 0;
-                }
-                bufferSize--;
-  
-                return temp;
-            }
-            // empty
-            return -1;
-        }
 
         private void DataReceivedHandler(object sender, SerialDataReceivedEventArgs e)
         {
@@ -203,7 +240,8 @@ namespace SERIAL_RX_TX
                 indata += "\n";
                 if (onMessageReceived != null)
                 {
-                    RXBuffer[pushBuffer()] = indata;
+                    myStack.push(indata);
+                    //RXBuffer[pushBuffer()] = indata;
                     //onMessageReceived(indata);
                 }
             }
