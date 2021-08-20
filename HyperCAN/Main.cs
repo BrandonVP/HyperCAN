@@ -2,182 +2,137 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.IO.Ports;
 using System.Linq;
 using System.Management;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using SERIAL_RX_TX;
 
 namespace HyperCAN
 {
     public partial class main : Form
     {
-        int SerialBaudRate = 500000;
-        String PortCOM = "COM10";
+        private main _form;
+        private SerialComPort serialPort;
+        private Timer receivedDataTimer;
+        private Timer receivedDataTimer2;
+        private Timer receivedDataTimer3;
+        private Timer receivedDataTimer4;
+        private Timer receivedDataTimer5;
+        private Timer receivedDataTimer6;
+        private string receivedData;
+        private bool dataReady = false;
+
+        String SerialBaudRate = "500000";
+        String PortCOM = Properties.Settings.Default.COMPort;
         internal SaveFileDialog SaveFileDialog1;
-        SerialClient serial1;
-        bool stopMessage = false;
+        
 
         public main()
         {
             InitializeComponent();
-            startSerial();
+            serialPort = new SerialComPort();
+            serialPort.RegisterReceiveCallback(ReceiveDataHandler);
+
+            receivedDataTimer = new Timer();
+            receivedDataTimer.Interval = 1;   // 25 ms
+            receivedDataTimer.Tick += new EventHandler(ReceivedDataTimerTick);
+            receivedDataTimer.Start();
+            
+            receivedDataTimer2 = new Timer();
+            receivedDataTimer2.Interval = 1;   // 25 ms
+            receivedDataTimer2.Tick += new EventHandler(ReceivedDataTimerTick);
+            receivedDataTimer2.Start();
+            
+            receivedDataTimer3 = new Timer();
+            receivedDataTimer3.Interval = 1;   // 25 ms
+            receivedDataTimer3.Tick += new EventHandler(ReceivedDataTimerTick);
+            receivedDataTimer3.Start();
+            
+            receivedDataTimer4 = new Timer();
+            receivedDataTimer4.Interval = 1;   // 25 ms
+            receivedDataTimer4.Tick += new EventHandler(ReceivedDataTimerTick);
+            receivedDataTimer4.Start();
+
+            receivedDataTimer5 = new Timer();
+            receivedDataTimer5.Interval = 1;   // 25 ms
+            receivedDataTimer5.Tick += new EventHandler(ReceivedDataTimerTick);
+            receivedDataTimer5.Start();
+
+            receivedDataTimer6 = new Timer();
+            receivedDataTimer6.Interval = 500;   // 25 ms
+            receivedDataTimer6.Tick += new EventHandler(bufferCount);
+            receivedDataTimer6.Start();
+
             this.SaveFileDialog1 = new SaveFileDialog();
         }
 
         private void startSerial()
         {
-            try
+            // Handles the Open/Close button, which toggles its label, depending on previous state.
+            string status;
+           
+            status = serialPort.Open(PortCOM, SerialBaudRate, "8", "None", "One");
+            if (!status.Contains("Opened") && !status.Contains("Closed"))
             {
-                serial1 = new SerialClient(PortCOM, SerialBaudRate);
-                serial1.OnReceiving += new EventHandler<DataStreamEventArgs>(receiveHandler);
-                if (!serial1.OpenConn())
+                UpdateDataWindow(status);
+            }
+           
+        }
+
+        private void ReceiveDataHandler(string data)
+        {
+            if (dataReady)
+            {
+                Debug.Print("Received data was thrown away because line buffer not emptied");
+            }
+            else
+            {
+                dataReady = true;
+                receivedData = data;
+            }
+        }
+
+        private void saveCaptureToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            new Form2().Show();
+        }
+
+
+        private void bufferCount(object sender, EventArgs e)
+        {
+            textBox1.Text = serialPort.getbufferSize().ToString();
+        }
+
+        private void ReceivedDataTimerTick(object sender, EventArgs e)
+        {
+            if (dataReady || serialPort.getbufferSize() > 1)
+            {
+                //UpdateDataWindow(receivedData);
+                int temp = serialPort.popBuffer();
+                if(temp != -1)
                 {
-                    MessageBox.Show(this, "The Port Cannot Be Opened", "Serial Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    UpdateDataWindow(serialPort.RXBuffer[serialPort.getbufferOutPtr()]);
                 }
-            }
-            catch(Exception f)
-            {
-                MessageBox.Show("Unable to open " + PortCOM, "Error");
+                dataReady = false;
             }
         }
 
-        StreamWriter streamwriter = new StreamWriter(@"C:\Users\bvanpelt\Documents\log.txt", true, Encoding.UTF8, 65536);
-
-        private void receiveHandler(object sender, DataStreamEventArgs e)
+        private void UpdateDataWindow(string message)
         {
-            // working it
-            string line = System.Text.Encoding.Default.GetString(e.Response);
-            //string line = System.Text.Encoding.Default.GetString(e.Response);
-            //Console.WriteLine("1) The length of '{0}' is {1}", line, line.Length);
-            //Console.WriteLine("1) Split: '{0}'", (line.Split('\n').Length > 1));
-            //streamwriter.WriteLine(line);
-            // line.Split attempts to split the string before it is completely written
-            //string[] stringValues = line.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-            //int a = Int32.Parse(stringValues[0]);
-
-            //Console.WriteLine("1) The messge count '{0}' is {1}", line, a);
-            //if (line.Length > 63)
-            //if (line.Length > 63 && !String.IsNullOrEmpty(line) && !String.IsNullOrWhiteSpace(line))
-            //{
-                richCANBox.BeginInvoke(new MethodInvoker(delegate { richCANBox.AppendText(line); }));
-            //}
-
-            // Clear messages in buffer after clear button pressed. 
-            // TODO: Try waiting for thread to finish before clearing using join
-            if (stopMessage)
-            {
-                richCANBox.BeginInvoke(new MethodInvoker(delegate { richCANBox.Clear(); }));
-            }
-        }
-
-        private void startButton_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                stopMessage = false;
-                byte[] data = new byte[1];
-                data[0] = 48;
-                serial1.Transmit(data);
-            }
-            catch(Exception f)
-            {
-
-            }
-        }
-
-        private void pauseButton_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                byte[] data = new byte[1];
-                data[0] = 49;
-                serial1.Transmit(data);
-            }
-            catch (Exception f)
-            {
-
-            }
-        }
-
-        private void clearButton_Click(object sender, EventArgs e)
-        {
-            stopMessage = true;
-            try
-            {
-                byte[] data = new byte[1];
-                data[0] = 50;
-                serial1.Transmit(data);
-            }
-            catch (Exception f)
-            {
-
-            }
-            richCANBox.Clear();
+            tbDataWindow.AppendText(message);
         }
 
         private void main_Load(object sender, EventArgs e)
         {
 
-        }
-
-        // Declare a new memory stream.
-        MemoryStream userInput = new MemoryStream();
-
-        //saveFileDialog1.Filter = "Text File|*.txt|PCAN|*.TRC";
-        //System.IO.File.WriteAllLines(@"C:\Users\bvanpelt\source\repos\HyperCAN\HyperCAN\a.txt", richCANBox.Lines);
-        private void saveCaptureToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            richCANBox.SaveFile(userInput, RichTextBoxStreamType.PlainText);
-            userInput.WriteByte(13);
-
-            // Display the entire contents of the stream,
-            // by setting its position to 0, to RichTextBox2.
-            userInput.Position = 0;
-            richCANBox.LoadFile(userInput, RichTextBoxStreamType.PlainText);
-
-            // Set the properties on SaveFileDialog1 so the user is 
-            // prompted to create the file if it doesn't exist 
-            // or overwrite the file if it does exist.
-            //SaveFileDialog1.CreatePrompt = true;
-            SaveFileDialog1.OverwritePrompt = true;
-
-            // Set the file name to myText.txt, set the type filter
-            // to text files, and set the initial directory to the 
-            // MyDocuments folder.
-            SaveFileDialog1.FileName = "Capture";
-            // DefaultExt is only used when "All files" is selected from 
-            // the filter box and no extension is specified by the user.
-            SaveFileDialog1.DefaultExt = "txt";
-            SaveFileDialog1.Filter =
-                "Text files (*.txt)|*.txt|All files (*.*)|*.*";
-            SaveFileDialog1.InitialDirectory =
-                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-
-            // Call ShowDialog and check for a return value of DialogResult.OK,
-            // which indicates that the file was saved. 
-            DialogResult result = SaveFileDialog1.ShowDialog();
-            Stream fileStream;
-
-            if (result == DialogResult.OK)
-            {
-                // Open the file, copy the contents of memoryStream to fileStream,
-                // and close fileStream. Set the memoryStream.Position value to 0 
-                // to copy the entire stream. 
-                fileStream = SaveFileDialog1.OpenFile();
-                userInput.Position = 0;
-                userInput.WriteTo(fileStream);
-                fileStream.Close();
-            }
-        }
-
-        private void richCANBox_TextChanged(object sender, EventArgs e)
-        {
-            richCANBox.ScrollToCaret();
         }
 
         private void fontSizeToolStripMenuItem_Click(object sender, EventArgs e)
@@ -190,7 +145,7 @@ namespace HyperCAN
         {
             int fontsize = 12;
             fontsize = int.Parse(fontSizeToolStripMenuItem.SelectedItem.ToString());
-            richCANBox.Font = new Font("Courier New", fontsize);
+            tbDataWindow.Font = new Font("Courier New", fontsize);
         }
 
         protected void readPortNames()
@@ -222,8 +177,7 @@ namespace HyperCAN
         private void toolStripComboBoxCOM_SelectedIndexChanged(object sender, EventArgs e)
         {
             PortCOM = toolStripComboBoxCOM.SelectedItem.ToString();
-            serialPort1.Close();
-            startSerial();
+            Properties.Settings.Default.COMPort = PortCOM;
         }
 
         private void textBox1_TextChanged(object sender, EventArgs e)
@@ -231,27 +185,10 @@ namespace HyperCAN
 
         }
 
-        public static void Find(RichTextBox rtb, String word, Color color)
-        {
-            if (word == "")
-            {
-                return;
-            }
-            int s_start = rtb.SelectionStart, startIndex = 0, index;
-            while ((index = rtb.Text.IndexOf(word, startIndex)) != -1)
-            {
-                rtb.Select(index, word.Length);
-                rtb.SelectionColor = color;
-                startIndex = index + word.Length;
-            }
-            rtb.SelectionStart = 0;
-            rtb.SelectionLength = rtb.TextLength;
-            //rtb.SelectionColor = Color.Black;
-        }
-
         private void captureSearch_Click(object sender, EventArgs e)
         {
-            Find(richCANBox, textBox1.Text, Color.Blue);
+            Properties.Settings.Default.output_file_name = textBox2.Text;
+            saveCapture();
         }
 
         private void textBox1_KeyDown(object sender, KeyEventArgs e)
@@ -269,7 +206,54 @@ namespace HyperCAN
 
         private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("Version 1.1", "Release");
+            MessageBox.Show("Version 0.1", "Release");
+        }
+
+        private void startButton_Click(object sender, EventArgs e)
+        {
+            startSerial();
+        }
+
+        private void stopButton_Click(object sender, EventArgs e)
+        {
+            serialPort.Close();
+            serialPort.Stop();
+        }
+
+        private void clearButton_Click(object sender, EventArgs e)
+        {
+            tbDataWindow.Clear();
+        }
+
+        public void tbDataWindow_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        public void saveCapture()
+        {
+            Console.WriteLine(Properties.Settings.Default.output_location);
+            Console.WriteLine(Properties.Settings.Default.output_file_name);
+            Console.WriteLine(Properties.Settings.Default.output_location + "\\" + Properties.Settings.Default.output_file_name);
+            using (var stream = File.CreateText(Properties.Settings.Default.output_location + "\\" + Properties.Settings.Default.output_file_name))
+            {
+                stream.Write(this.tbDataWindow.Text);
+            }
+        }
+
+        private void label2_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void textBox2_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Application.Exit();
         }
     }
 }

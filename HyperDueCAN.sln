@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30611.23
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HyperCAN", "HyperCAN\HyperCAN.csproj", "{92A9D94A-E4F4-4F0E-B610-D655817807C7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HyperDueCAN", "HyperCAN\HyperDueCAN.csproj", "{92A9D94A-E4F4-4F0E-B610-D655817807C7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
