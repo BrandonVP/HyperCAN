@@ -13,97 +13,17 @@
 // 8/20/2021, Brandon Van Pelt
 // Added circular buffer
 
+/*
 using System;
 using System.IO.Ports;
 using System.Diagnostics;
 
 namespace SERIAL_RX_TX
 {
-    public class Stack
-    {
-        private int array_size;
-        private int bufferOutPtr;
-        private int bufferInPtr;
-        private int MessagesInBuffer;
-        private String[] CAN_Bus_Stack;
-
-        public Stack(int size)
-        {
-            array_size = size;
-            CAN_Bus_Stack = new string[array_size];
-            bufferOutPtr = 0;
-            bufferInPtr = 0;
-            MessagesInBuffer = 0;
-        }
-
-        public bool push(String addMe)
-        {
-            CAN_Bus_Stack[bufferInPtr] = addMe;
-
-            bufferInPtr++;
-            // End of circular buffer 
-            if (bufferInPtr == array_size)
-            {
-                bufferInPtr = 0;
-            }
-            // Overflow case
-            if (bufferInPtr == bufferOutPtr)
-            {
-                bufferOutPtr++;
-                // Let user know an overwrite occured
-                return false;
-            }
-            else
-            {
-                MessagesInBuffer++;
-            }
-            return true;
-        }
-
-        public String pop()
-        {
-            int temp = bufferOutPtr;
-
-            // Check if empty
-            if (bufferOutPtr != bufferInPtr)
-            {
-                bufferOutPtr++;
-
-                // End of circular buffer 
-                if (bufferOutPtr > array_size - 1)
-                {
-                    bufferOutPtr = 0;
-                }
-                MessagesInBuffer--;
-                return CAN_Bus_Stack[temp];
-            }
-            // empty
-            return null;
-        }
-
-        public int stack_size()
-        {
-            return MessagesInBuffer;
-        }
-
-        public String peek()
-        {
-            return CAN_Bus_Stack[bufferOutPtr];
-        }
-
-        public void reset()
-        {
-            bufferOutPtr = 0;
-            bufferInPtr = 0;
-            MessagesInBuffer = 0;
-        }
-    }
+   
 
     public class SerialComPort
     {
-        Stack myStack;
-        SerialPort comPort;
-
         public int getbufferSize()
         {
             return myStack.stack_size();
@@ -120,8 +40,7 @@ namespace SERIAL_RX_TX
         // constructor
         public SerialComPort()
         {
-            comPort = new SerialPort();
-            myStack = new Stack(2048);
+            
         }
 
         ~SerialComPort()
@@ -131,125 +50,7 @@ namespace SERIAL_RX_TX
 
 
         // User must register function to call when a line of text terminated by \n has been received
-        public delegate void ReceiveCallback(string receivedMessage);
-        public event ReceiveCallback onMessageReceived = null;
-        public void RegisterReceiveCallback(ReceiveCallback FunctionToCall)
-        {
-            onMessageReceived += FunctionToCall;
-        }
-        public void DeRegisterReceiveCallback(ReceiveCallback FunctionToCall)
-        {
-            onMessageReceived -= FunctionToCall;
-        }
-
-        public void SendLine(string aString)
-        {
-            try
-            {
-                if (comPort.IsOpen)
-                {
-                    comPort.Write(aString);
-                }
-            }
-            catch (Exception exp)
-            {
-                Debug.Print(exp.Message);
-            }
-        }
-
-        public string Open(string portName, string baudRate, string dataBits, string parity, string stopBits)
-        {
-            try
-            {
-                comPort.WriteBufferSize = 4096;
-                comPort.ReadBufferSize = 4096;
-                comPort.WriteTimeout = 500;
-                comPort.ReadTimeout = 500;
-                comPort.DtrEnable = true;
-                comPort.Handshake = Handshake.None;
-                comPort.PortName = portName.TrimEnd();
-                comPort.BaudRate = Convert.ToInt32(baudRate);
-                comPort.DataBits = Convert.ToInt32(dataBits);
-                switch (parity)
-                {
-                    case "None":
-                        comPort.Parity = Parity.None;
-                        break;
-                    case "Even":
-                        comPort.Parity = Parity.Even;
-                        break;
-                    case "Odd":
-                        comPort.Parity = Parity.Odd;
-                        break;
-                }
-                switch (stopBits)
-                {
-                    case "One":
-                        comPort.StopBits = StopBits.One;
-                        break;
-                    case "Two":
-                        comPort.StopBits = StopBits.Two;
-                        break;
-                }
-                comPort.Open();
-                comPort.DataReceived += new SerialDataReceivedEventHandler(DataReceivedHandler);
-            }
-            catch (Exception error)
-            {
-                return error.Message + "\r\n";
-            }
-            if (comPort.IsOpen)
-            {
-                return string.Format("{0} Opened \r\n", comPort.PortName);
-            }
-            else
-            {
-                return string.Format("{0} Open Failed \r\n", comPort.PortName);
-            }
-        }
-
-        public string Close()
-        {
-            try
-            {
-                comPort.Close();
-            }
-            catch (Exception error)
-            {
-                return error.Message + "\r\n";
-            }
-            return string.Format("{0} Closed\r\n", comPort.PortName);
-        }
-
-        public bool IsOpen()
-        {
-            return comPort.IsOpen;
-        }
-
-
-        private void DataReceivedHandler(object sender, SerialDataReceivedEventArgs e)
-        {
-            if (!comPort.IsOpen)
-            {
-                return;
-            }
-            string indata = string.Empty;
-            try
-            {
-                indata = comPort.ReadLine();
-                indata += "\n";
-                if (onMessageReceived != null)
-                {
-                    myStack.push(indata);
-                    //RXBuffer[pushBuffer()] = indata;
-                    //onMessageReceived(indata);
-                }
-            }
-            catch (Exception error)
-            {
-                Debug.Print(error.Message);
-            }
-
-        }
+        
     }
 }
+*/

@@ -11,67 +11,65 @@ using System.Management;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using SERIAL_RX_TX;
+//using SERIAL_RX_TX;
 
 namespace HyperCAN
 {
     public partial class main : Form
     {
         private main _form;
-        private SerialComPort serialPort;
-        private Timer receivedDataTimer;
-        private Timer receivedDataTimer2;
-        private Timer receivedDataTimer3;
-        private Timer receivedDataTimer4;
-        private Timer receivedDataTimer5;
-        private Timer receivedDataTimer6;
-        private string receivedData;
+        Stack myStack;
+        SerialPort comPort;
+
+        //private Timer receivedDataTimer;
+        //private Timer receivedDataTimer2;
+        private System.Windows.Forms.Timer receivedDataTimer6;
+        
         private bool dataReady = false;
 
         String SerialBaudRate = "500000";
         String PortCOM = Properties.Settings.Default.COMPort;
         internal SaveFileDialog SaveFileDialog1;
-        
 
         public main()
         {
             InitializeComponent();
-            serialPort = new SerialComPort();
-            serialPort.RegisterReceiveCallback(ReceiveDataHandler);
 
+            //serialPort.DataReceivedHandler += new EventHandler(ReceivedDataTimerTick);
+            /*
             receivedDataTimer = new Timer();
-            receivedDataTimer.Interval = 1;   // 25 ms
+            receivedDataTimer.Interval = 1;   
             receivedDataTimer.Tick += new EventHandler(ReceivedDataTimerTick);
             receivedDataTimer.Start();
+            */
             
-            receivedDataTimer2 = new Timer();
-            receivedDataTimer2.Interval = 1;   // 25 ms
-            receivedDataTimer2.Tick += new EventHandler(ReceivedDataTimerTick);
-            receivedDataTimer2.Start();
-            
-            receivedDataTimer3 = new Timer();
-            receivedDataTimer3.Interval = 1;   // 25 ms
-            receivedDataTimer3.Tick += new EventHandler(ReceivedDataTimerTick);
-            receivedDataTimer3.Start();
-            
-            receivedDataTimer4 = new Timer();
-            receivedDataTimer4.Interval = 1;   // 25 ms
-            receivedDataTimer4.Tick += new EventHandler(ReceivedDataTimerTick);
-            receivedDataTimer4.Start();
-
-            receivedDataTimer5 = new Timer();
-            receivedDataTimer5.Interval = 1;   // 25 ms
-            receivedDataTimer5.Tick += new EventHandler(ReceivedDataTimerTick);
-            receivedDataTimer5.Start();
-
-            receivedDataTimer6 = new Timer();
-            receivedDataTimer6.Interval = 500;   // 25 ms
+            receivedDataTimer6 = new System.Windows.Forms.Timer();
+            receivedDataTimer6.Interval = 500;   
             receivedDataTimer6.Tick += new EventHandler(bufferCount);
             receivedDataTimer6.Start();
-
+            
             this.SaveFileDialog1 = new SaveFileDialog();
+
+            comPort = new SerialPort();
+            RegisterReceiveCallback(ReceiveDataHandler);
+            myStack = new Stack(2048);
+
+            //Console.WriteLine("test");
+            ThreadPool.QueueUserWorkItem(new WaitCallback(printFRAMES));
+        }
+
+        public void printFRAMES(object obj)
+        {
+            while (true)
+            {
+                if (myStack.stack_size() > 1)
+                {
+                    tbDataWindow.Invoke(new MethodInvoker(delegate { tbDataWindow.AppendText(myStack.pop()); }));
+                }
+            }
         }
 
         private void startSerial()
@@ -79,24 +77,25 @@ namespace HyperCAN
             // Handles the Open/Close button, which toggles its label, depending on previous state.
             string status;
            
-            status = serialPort.Open(PortCOM, SerialBaudRate, "8", "None", "One");
+            status = Open(PortCOM, SerialBaudRate, "8", "None", "One");
             if (!status.Contains("Opened") && !status.Contains("Closed"))
             {
-                UpdateDataWindow(status);
+                
             }
-           
         }
 
-        private void ReceiveDataHandler(string data)
+        public void ReceiveDataHandler(string data)
         {
+            Console.WriteLine("test");
             if (dataReady)
             {
-                Debug.Print("Received data was thrown away because line buffer not emptied");
+                Console.WriteLine("Received data was thrown away because line buffer not emptied");
             }
             else
             {
-                dataReady = true;
-                receivedData = data;
+                //dataReady = true;
+                //receivedData = data;
+                Console.WriteLine("here");
             }
         }
 
@@ -105,18 +104,20 @@ namespace HyperCAN
             new Form2().Show();
         }
 
-
         private void bufferCount(object sender, EventArgs e)
         {
-            textBox1.Text = serialPort.getbufferSize().ToString();
+            textBox1.Text = myStack.stack_size().ToString();
         }
 
         private void ReceivedDataTimerTick(object sender, EventArgs e)
         {
-            if (dataReady || serialPort.getbufferSize() > 1)
+            
+            //tbDataWindow.AppendText(myStack.stack_size().ToString());
+            if (dataReady || myStack.stack_size() > 1)
             {
+
                 
-                UpdateDataWindow(serialPort.getFRAME());
+                UpdateDataWindow(myStack.pop());
                 
                 dataReady = false;
             }
@@ -213,8 +214,8 @@ namespace HyperCAN
 
         private void stopButton_Click(object sender, EventArgs e)
         {
-            serialPort.Close();
-            serialPort.Stop();
+            ClosePort();
+            Stop();
         }
 
         private void clearButton_Click(object sender, EventArgs e)
@@ -251,6 +252,208 @@ namespace HyperCAN
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Application.Exit();
+        }
+
+        public delegate void ReceiveCallback(string receivedMessage);
+        public event ReceiveCallback onMessageReceived = null;
+        public void RegisterReceiveCallback(ReceiveCallback FunctionToCall)
+        {
+            onMessageReceived += FunctionToCall;
+        }
+        public void DeRegisterReceiveCallback(ReceiveCallback FunctionToCall)
+        {
+            onMessageReceived -= FunctionToCall;
+        }
+
+        public void SendLine(string aString)
+        {
+            try
+            {
+                if (comPort.IsOpen)
+                {
+                    comPort.Write(aString);
+                }
+            }
+            catch (Exception exp)
+            {
+                Debug.Print(exp.Message);
+            }
+        }
+
+        public string Open(string portName, string baudRate, string dataBits, string parity, string stopBits)
+        {
+            try
+            {
+                comPort.WriteBufferSize = 4096;
+                comPort.ReadBufferSize = 4096;
+                comPort.WriteTimeout = 500;
+                comPort.ReadTimeout = 500;
+                comPort.DtrEnable = true;
+                comPort.Handshake = Handshake.None;
+                comPort.PortName = portName.TrimEnd();
+                comPort.BaudRate = Convert.ToInt32(baudRate);
+                comPort.DataBits = Convert.ToInt32(dataBits);
+                switch (parity)
+                {
+                    case "None":
+                        comPort.Parity = Parity.None;
+                        break;
+                    case "Even":
+                        comPort.Parity = Parity.Even;
+                        break;
+                    case "Odd":
+                        comPort.Parity = Parity.Odd;
+                        break;
+                }
+                switch (stopBits)
+                {
+                    case "One":
+                        comPort.StopBits = StopBits.One;
+                        break;
+                    case "Two":
+                        comPort.StopBits = StopBits.Two;
+                        break;
+                }
+                comPort.Open();
+                comPort.DataReceived += new SerialDataReceivedEventHandler(DataReceivedHandler);
+            }
+            catch (Exception error)
+            {
+                return error.Message + "\r\n";
+            }
+            if (comPort.IsOpen)
+            {
+                return string.Format("{0} Opened \r\n", comPort.PortName);
+            }
+            else
+            {
+                return string.Format("{0} Open Failed \r\n", comPort.PortName);
+            }
+        }
+
+        public string ClosePort()
+        {
+            try
+            {
+                comPort.Close();
+            }
+            catch (Exception error)
+            {
+                return error.Message + "\r\n";
+            }
+            return string.Format("{0} Closed\r\n", comPort.PortName);
+        }
+
+        public bool IsOpen()
+        {
+            return comPort.IsOpen;
+        }
+
+        public void Stop()
+        {
+            myStack.reset();
+        }
+
+        public void DataReceivedHandler(object sender, SerialDataReceivedEventArgs e)
+        {
+            
+            if (!comPort.IsOpen)
+            {
+                return;
+            }
+            string indata = string.Empty;
+            try
+            {
+                indata = comPort.ReadLine();
+                indata += "\n";
+                if (onMessageReceived != null)
+                {
+                    myStack.push(indata);
+                }
+            }
+            catch (Exception error)
+            {
+
+            }
+        }
+    }
+    public class Stack
+    {
+        private int array_size;
+        private int bufferOutPtr;
+        private int bufferInPtr;
+        private int MessagesInBuffer;
+        private String[] CAN_Bus_Stack;
+
+        public Stack(int size)
+        {
+            array_size = size;
+            CAN_Bus_Stack = new string[array_size];
+            bufferOutPtr = 0;
+            bufferInPtr = 0;
+            MessagesInBuffer = 0;
+        }
+
+        public bool push(String addMe)
+        {
+            CAN_Bus_Stack[bufferInPtr] = addMe;
+
+            bufferInPtr++;
+            // End of circular buffer 
+            if (bufferInPtr == array_size)
+            {
+                bufferInPtr = 0;
+            }
+            // Overflow case
+            if (bufferInPtr == bufferOutPtr)
+            {
+                bufferOutPtr++;
+                // Let user know an overwrite occurred
+                return false;
+            }
+            else
+            {
+                MessagesInBuffer++;
+            }
+            return true;
+        }
+
+        public String pop()
+        {
+            int temp = bufferOutPtr;
+
+            // Check if empty
+            if (bufferOutPtr != bufferInPtr)
+            {
+                bufferOutPtr++;
+
+                // End of circular buffer 
+                if (bufferOutPtr > array_size - 1)
+                {
+                    bufferOutPtr = 0;
+                }
+                MessagesInBuffer--;
+                return CAN_Bus_Stack[temp];
+            }
+            // empty
+            return null;
+        }
+
+        public int stack_size()
+        {
+            return MessagesInBuffer;
+        }
+
+        public String peek()
+        {
+            return CAN_Bus_Stack[bufferOutPtr];
+        }
+
+        public void reset()
+        {
+            bufferOutPtr = 0;
+            bufferInPtr = 0;
+            MessagesInBuffer = 0;
         }
     }
 }
