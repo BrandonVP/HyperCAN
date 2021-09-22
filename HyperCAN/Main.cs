@@ -14,38 +14,28 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-//using SERIAL_RX_TX;
 
 namespace HyperCAN
 {
     public partial class main : Form
     {
-        private main _form;
+        // Stack for buffer
         Stack myStack;
-        SerialPort comPort;
 
-        //private Timer receivedDataTimer;
-        //private Timer receivedDataTimer2;
-        private System.Windows.Forms.Timer receivedDataTimer6;
-        
-        private bool dataReady = false;
+        SerialPort comPort;
 
         String SerialBaudRate = "500000";
         String PortCOM = Properties.Settings.Default.COMPort;
         internal SaveFileDialog SaveFileDialog1;
+        private System.Windows.Forms.Timer receivedDataTimer6;
 
         public main()
         {
             InitializeComponent();
 
-            //serialPort.DataReceivedHandler += new EventHandler(ReceivedDataTimerTick);
-            /*
-            receivedDataTimer = new Timer();
-            receivedDataTimer.Interval = 1;   
-            receivedDataTimer.Tick += new EventHandler(ReceivedDataTimerTick);
-            receivedDataTimer.Start();
-            */
-            
+            comPort = new SerialPort();
+            myStack = new Stack(2048);
+
             receivedDataTimer6 = new System.Windows.Forms.Timer();
             receivedDataTimer6.Interval = 500;   
             receivedDataTimer6.Tick += new EventHandler(bufferCount);
@@ -53,25 +43,37 @@ namespace HyperCAN
             
             this.SaveFileDialog1 = new SaveFileDialog();
 
-            comPort = new SerialPort();
             RegisterReceiveCallback(ReceiveDataHandler);
-            myStack = new Stack(2048);
-
-            //Console.WriteLine("test");
+            
+            // Thread to poll for incomming messages stored in the buffer
             ThreadPool.QueueUserWorkItem(new WaitCallback(printFRAMES));
         }
 
+        // Poll messages stored in the buffer
         public void printFRAMES(object obj)
         {
             while (true)
             {
-                if (myStack.stack_size() > 1)
+                try
                 {
-                    tbDataWindow.Invoke(new MethodInvoker(delegate { tbDataWindow.AppendText(myStack.pop()); }));
+                    if (myStack.stack_size() > 1 && comPort.IsOpen)
+                    {
+                        tbDataWindow.Invoke(new MethodInvoker(delegate { tbDataWindow.AppendText(myStack.pop()); }));
+                    }
+                    else if (!comPort.IsOpen)
+                    {
+                        // Clear messages in buffer when serial port is closed
+                        myStack.reset();
+                    }
+                }
+                catch (Exception exp)
+                {
+                    Console.WriteLine(exp.Message);
                 }
             }
         }
 
+        // Open serial COM port
         private void startSerial()
         {
             // Handles the Open/Close button, which toggles its label, depending on previous state.
@@ -80,23 +82,13 @@ namespace HyperCAN
             status = Open(PortCOM, SerialBaudRate, "8", "None", "One");
             if (!status.Contains("Opened") && !status.Contains("Closed"))
             {
-                
+                Console.WriteLine(status);
             }
         }
 
         public void ReceiveDataHandler(string data)
         {
-            Console.WriteLine("test");
-            if (dataReady)
-            {
-                Console.WriteLine("Received data was thrown away because line buffer not emptied");
-            }
-            else
-            {
-                //dataReady = true;
-                //receivedData = data;
-                Console.WriteLine("here");
-            }
+   
         }
 
         private void saveCaptureToolStripMenuItem_Click(object sender, EventArgs e)
@@ -107,25 +99,6 @@ namespace HyperCAN
         private void bufferCount(object sender, EventArgs e)
         {
             textBox1.Text = myStack.stack_size().ToString();
-        }
-
-        private void ReceivedDataTimerTick(object sender, EventArgs e)
-        {
-            
-            //tbDataWindow.AppendText(myStack.stack_size().ToString());
-            if (dataReady || myStack.stack_size() > 1)
-            {
-
-                
-                UpdateDataWindow(myStack.pop());
-                
-                dataReady = false;
-            }
-        }
-
-        private void UpdateDataWindow(string message)
-        {
-            tbDataWindow.AppendText(message);
         }
 
         private void main_Load(object sender, EventArgs e)
@@ -185,8 +158,11 @@ namespace HyperCAN
 
         private void captureSearch_Click(object sender, EventArgs e)
         {
-            Properties.Settings.Default.output_file_name = textBox2.Text;
-            saveCapture();
+            if (!String.IsNullOrEmpty(textBox2.Text))
+            {
+                Properties.Settings.Default.output_file_name = textBox2.Text;
+                saveCapture();
+            }
         }
 
         private void textBox1_KeyDown(object sender, KeyEventArgs e)
@@ -204,7 +180,7 @@ namespace HyperCAN
 
         private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("Version 0.1", "Release");
+            MessageBox.Show("Version 1.0", "Release");
         }
 
         private void startButton_Click(object sender, EventArgs e)
@@ -215,7 +191,6 @@ namespace HyperCAN
         private void stopButton_Click(object sender, EventArgs e)
         {
             ClosePort();
-            Stop();
         }
 
         private void clearButton_Click(object sender, EventArgs e)
@@ -276,7 +251,7 @@ namespace HyperCAN
             }
             catch (Exception exp)
             {
-                Debug.Print(exp.Message);
+                Console.WriteLine(exp.Message);
             }
         }
 
@@ -349,14 +324,8 @@ namespace HyperCAN
             return comPort.IsOpen;
         }
 
-        public void Stop()
-        {
-            myStack.reset();
-        }
-
         public void DataReceivedHandler(object sender, SerialDataReceivedEventArgs e)
         {
-            
             if (!comPort.IsOpen)
             {
                 return;
@@ -373,7 +342,7 @@ namespace HyperCAN
             }
             catch (Exception error)
             {
-
+                Console.WriteLine(error);
             }
         }
     }
@@ -449,6 +418,7 @@ namespace HyperCAN
             return CAN_Bus_Stack[bufferOutPtr];
         }
 
+        // Clears out all messages currently in the buffer
         public void reset()
         {
             bufferOutPtr = 0;
