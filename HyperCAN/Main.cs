@@ -371,7 +371,7 @@ namespace HyperCAN
 
             bufferInPtr++;
             // End of circular buffer 
-            if (bufferInPtr == array_size)
+            if (bufferInPtr > array_size - 1)
             {
                 bufferInPtr = 0;
             }
@@ -379,6 +379,10 @@ namespace HyperCAN
             if (bufferInPtr == bufferOutPtr)
             {
                 bufferOutPtr++;
+                if (bufferOutPtr > array_size - 1)
+                {
+                    bufferOutPtr = 0;
+                }
                 // Let user know an overwrite occurred
                 return false;
             }
