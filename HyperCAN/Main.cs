@@ -15,6 +15,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
+// TODO: Index error when using stop
+
 namespace HyperCAN
 {
     public partial class main : Form
@@ -56,7 +58,7 @@ namespace HyperCAN
             {
                 try
                 {
-                    if (myStack.stack_size() > 1 && comPort.IsOpen)
+                    if (myStack.stack_size() > 0 && comPort.IsOpen)
                     {
                         tbDataWindow.Invoke(new MethodInvoker(delegate { tbDataWindow.AppendText(myStack.pop()); }));
                     }
@@ -200,7 +202,7 @@ namespace HyperCAN
 
         public void tbDataWindow_TextChanged(object sender, EventArgs e)
         {
-
+             
         }
 
         public void saveCapture()
