@@ -48,7 +48,22 @@ namespace HyperCAN
             RegisterReceiveCallback(ReceiveDataHandler);
             
             // Thread to poll for incomming messages stored in the buffer
-            ThreadPool.QueueUserWorkItem(new WaitCallback(printFRAMES));
+            //ThreadPool.QueueUserWorkItem(new WaitCallback(printFRAMES));
+        }
+
+        // https://stackoverflow.com/questions/519233/writing-to-a-textbox-from-another-thread
+        public void AppendTextBox(string value)
+        {
+            if (InvokeRequired)
+            {
+                this.Invoke(new Action<string>(AppendTextBox), new object[] { value });
+                return;
+            }
+            tbDataWindow.Text += value;
+
+            // https://stackoverflow.com/questions/1228675/scroll-to-bottom-of-c-sharp-textbox
+            tbDataWindow.SelectionStart = tbDataWindow.Text.Length;
+            tbDataWindow.ScrollToCaret();
         }
 
         // Poll messages stored in the buffer
@@ -60,7 +75,8 @@ namespace HyperCAN
                 {
                     if (myStack.stack_size() > 0 && comPort.IsOpen)
                     {
-                        tbDataWindow.Invoke(new MethodInvoker(delegate { tbDataWindow.AppendText(myStack.pop()); }));
+                        AppendTextBox(myStack.pop());
+                        //tbDataWindow.Invoke(new MethodInvoker(delegate { tbDataWindow.AppendText(myStack.pop()); }));
                     }
                     else if (!comPort.IsOpen)
                     {
@@ -188,6 +204,40 @@ namespace HyperCAN
         private void startButton_Click(object sender, EventArgs e)
         {
             startSerial();
+
+        //https://stackoverflow.com/questions/23340894/polling-the-right-way
+            int delay = 1;
+            var cancellationTokenSource = new CancellationTokenSource();
+            var token = cancellationTokenSource.Token;
+            var listener = Task.Factory.StartNew(() =>
+            {
+                while (true)
+                {
+                    // poll hardware
+                    try
+                    {
+                        if (myStack.stack_size() > 0 && comPort.IsOpen)
+                        {
+                            AppendTextBox(myStack.pop());
+                        }
+                        else if (!comPort.IsOpen)
+                        {
+                            // Clear messages in buffer when serial port is closed
+                            myStack.reset();
+                        }
+                    }
+                    catch (Exception exp)
+                    {
+                        Console.WriteLine(exp.Message);
+                    }
+
+                    Thread.Sleep(delay);
+                    if (token.IsCancellationRequested)
+                        break;
+                }
+
+                // cleanup, e.g. close connection
+            }, token, TaskCreationOptions.LongRunning, TaskScheduler.Default);
         }
 
         private void stopButton_Click(object sender, EventArgs e)
@@ -347,6 +397,11 @@ namespace HyperCAN
                 Console.WriteLine(error);
             }
         }
+
+        private void BaudStripComboBox1_Click(object sender, EventArgs e)
+        {
+
+        }
     }
     public class Stack
     {
@@ -397,21 +452,18 @@ namespace HyperCAN
         {
             int temp = bufferOutPtr;
 
-            // Check if empty
-            if (bufferOutPtr != bufferInPtr)
-            {
-                bufferOutPtr++;
+            bufferOutPtr++;
+            MessagesInBuffer--;
 
-                // End of circular buffer 
-                if (bufferOutPtr > array_size - 1)
-                {
-                    bufferOutPtr = 0;
-                }
-                MessagesInBuffer--;
-                return CAN_Bus_Stack[temp];
+            // End of circular buffer 
+            if (bufferOutPtr > array_size - 1)
+            {
+                bufferOutPtr = 0;
             }
-            // empty
-            return null;
+
+            MessagesInBuffer--;
+
+            return CAN_Bus_Stack[temp];
         }
 
         public int stack_size()

@@ -52,6 +52,9 @@
             this.label1 = new System.Windows.Forms.Label();
             this.textBox2 = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
+            this.baudToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            this.BaudStripComboBox1 = new System.Windows.Forms.ToolStripComboBox();
             this.toolStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -82,14 +85,14 @@
             // saveCaptureToolStripMenuItem
             // 
             this.saveCaptureToolStripMenuItem.Name = "saveCaptureToolStripMenuItem";
-            this.saveCaptureToolStripMenuItem.Size = new System.Drawing.Size(134, 22);
+            this.saveCaptureToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.saveCaptureToolStripMenuItem.Text = "&Save Folder";
             this.saveCaptureToolStripMenuItem.Click += new System.EventHandler(this.saveCaptureToolStripMenuItem_Click);
             // 
             // exitToolStripMenuItem
             // 
             this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            this.exitToolStripMenuItem.Size = new System.Drawing.Size(134, 22);
+            this.exitToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.exitToolStripMenuItem.Text = "&Exit";
             this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
             // 
@@ -98,7 +101,8 @@
             this.toolStripDropDownButton2.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
             this.toolStripDropDownButton2.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.appearanceToolStripMenuItem,
-            this.cOMPortToolStripMenuItem});
+            this.cOMPortToolStripMenuItem,
+            this.baudToolStripMenuItem});
             this.toolStripDropDownButton2.Image = ((System.Drawing.Image)(resources.GetObject("toolStripDropDownButton2.Image")));
             this.toolStripDropDownButton2.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.toolStripDropDownButton2.Name = "toolStripDropDownButton2";
@@ -268,6 +272,34 @@
             this.label2.Text = "File Name";
             this.label2.Click += new System.EventHandler(this.label2_Click);
             // 
+            // baudToolStripMenuItem
+            // 
+            this.baudToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.BaudStripComboBox1,
+            this.toolStripSeparator1});
+            this.baudToolStripMenuItem.Name = "baudToolStripMenuItem";
+            this.baudToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.baudToolStripMenuItem.Text = "&Baud";
+            // 
+            // toolStripSeparator1
+            // 
+            this.toolStripSeparator1.Name = "toolStripSeparator1";
+            this.toolStripSeparator1.Size = new System.Drawing.Size(237, 6);
+            // 
+            // BaudStripComboBox1
+            // 
+            this.BaudStripComboBox1.Items.AddRange(new object[] {
+            "1000000",
+            "750000",
+            "500000",
+            "250000",
+            "125000",
+            "100000"});
+            this.BaudStripComboBox1.Name = "BaudStripComboBox1";
+            this.BaudStripComboBox1.Size = new System.Drawing.Size(180, 23);
+            this.BaudStripComboBox1.Text = "Select";
+            this.BaudStripComboBox1.Click += new System.EventHandler(this.BaudStripComboBox1_Click);
+            // 
             // main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -318,6 +350,9 @@
         private System.Windows.Forms.TextBox textBox2;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem baudToolStripMenuItem;
+        private System.Windows.Forms.ToolStripComboBox BaudStripComboBox1;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
     }
 }
 
